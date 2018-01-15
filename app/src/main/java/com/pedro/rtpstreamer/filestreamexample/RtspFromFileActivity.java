@@ -1,4 +1,4 @@
-package com.pedro.rtmpstreamer.filestreamexample;
+package com.pedro.rtpstreamer.filestreamexample;
 
 import android.content.Intent;
 import android.os.Build;
@@ -11,20 +11,24 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.pedro.rtmpstreamer.utils.PathUtils;
-import com.pedro.rtplibrary.rtmp.RtmpFromFile;
+import com.pedro.rtpstreamer.utils.PathUtils;
+import com.pedro.rtplibrary.rtsp.RtspFromFile;
 import com.pedro.encoder.input.decoder.VideoDecoderInterface;
-import com.pedro.rtmpstreamer.R;
-
-import net.ossrs.rtmp.ConnectCheckerRtmp;
+import com.pedro.rtpstreamer.R;
+import com.pedro.rtsp.utils.ConnectCheckerRtsp;
 
 import java.io.IOException;
 
+/**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.FromFileBase}
+ * {@link com.pedro.rtplibrary.rtsp.RtspFromFile}
+ */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class RtmpFromFileActivity extends AppCompatActivity
-    implements ConnectCheckerRtmp, View.OnClickListener, VideoDecoderInterface {
+public class RtspFromFileActivity extends AppCompatActivity
+    implements ConnectCheckerRtsp, View.OnClickListener, VideoDecoderInterface {
 
-  private RtmpFromFile rtmpFromFile;
+  private RtspFromFile rtspFromFile;
   private Button button, bSelectFile;
   private EditText etUrl;
   private TextView tvFile;
@@ -39,60 +43,60 @@ public class RtmpFromFileActivity extends AppCompatActivity
     button.setOnClickListener(this);
     bSelectFile.setOnClickListener(this);
     etUrl = findViewById(R.id.et_rtp_url);
-    etUrl.setHint(R.string.hint_rtmp);
+    etUrl.setHint(R.string.hint_rtsp);
     tvFile = findViewById(R.id.tv_file);
-    rtmpFromFile = new RtmpFromFile(this, this);
+    rtspFromFile = new RtspFromFile(this, this);
   }
 
   @Override
-  public void onConnectionSuccessRtmp() {
+  public void onConnectionSuccessRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(RtmpFromFileActivity.this, "Connection success", Toast.LENGTH_SHORT).show();
+        Toast.makeText(RtspFromFileActivity.this, "Connection success", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onConnectionFailedRtmp(final String reason) {
+  public void onConnectionFailedRtsp(final String reason) {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(RtmpFromFileActivity.this, "Connection failed. " + reason,
+        Toast.makeText(RtspFromFileActivity.this, "Connection failed. " + reason,
             Toast.LENGTH_SHORT).show();
-        rtmpFromFile.stopStream();
+        rtspFromFile.stopStream();
         button.setText(R.string.start_button);
       }
     });
   }
 
   @Override
-  public void onDisconnectRtmp() {
+  public void onDisconnectRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(RtmpFromFileActivity.this, "Disconnected", Toast.LENGTH_SHORT).show();
+        Toast.makeText(RtspFromFileActivity.this, "Disconnected", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onAuthErrorRtmp() {
+  public void onAuthErrorRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(RtmpFromFileActivity.this, "Auth error", Toast.LENGTH_SHORT).show();
+        Toast.makeText(RtspFromFileActivity.this, "Auth error", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onAuthSuccessRtmp() {
+  public void onAuthSuccessRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(RtmpFromFileActivity.this, "Auth success", Toast.LENGTH_SHORT).show();
+        Toast.makeText(RtspFromFileActivity.this, "Auth success", Toast.LENGTH_SHORT).show();
       }
     });
   }
@@ -112,14 +116,14 @@ public class RtmpFromFileActivity extends AppCompatActivity
     switch (view.getId()) {
       case R.id.b_start_stop:
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-          if (!rtmpFromFile.isStreaming()) {
+          if (!rtspFromFile.isStreaming()) {
             try {
-              if (rtmpFromFile.prepareVideo(filePath, 1200 * 1024)) {
+              if (rtspFromFile.prepareVideo(filePath, 1200 * 1024)) {
                 button.setText(R.string.stop_button);
-                rtmpFromFile.startStream(etUrl.getText().toString());
+                rtspFromFile.startStream(etUrl.getText().toString());
               } else {
                 button.setText(R.string.start_button);
-                rtmpFromFile.stopStream();
+                rtspFromFile.stopStream();
                 /*This error could be 2 things.
                  Your device cant decode or encode this file or
                  the file is not supported for the library.
@@ -132,7 +136,7 @@ public class RtmpFromFileActivity extends AppCompatActivity
             }
           } else {
             button.setText(R.string.start_button);
-            rtmpFromFile.stopStream();
+            rtspFromFile.stopStream();
           }
         }
         break;
@@ -151,14 +155,13 @@ public class RtmpFromFileActivity extends AppCompatActivity
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        if (rtmpFromFile.isStreaming()) {
+        if (rtspFromFile.isStreaming()) {
           button.setText(R.string.start_button);
-          Toast.makeText(RtmpFromFileActivity.this, "Video stream finished", Toast.LENGTH_SHORT)
+          Toast.makeText(RtspFromFileActivity.this, "Video stream finished", Toast.LENGTH_SHORT)
               .show();
-          rtmpFromFile.stopStream();
+          rtspFromFile.stopStream();
         }
       }
     });
   }
 }
-

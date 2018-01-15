@@ -1,4 +1,4 @@
-package com.pedro.rtmpstreamer.surfacemodeexample;
+package com.pedro.rtpstreamer.surfacemodeexample;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -10,16 +10,20 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.pedro.rtpstreamer.R;
+import com.pedro.rtplibrary.rtmp.RtmpCamera2;
+import net.ossrs.rtmp.ConnectCheckerRtmp;
 
-import com.pedro.rtplibrary.rtsp.RtspCamera2;
-import com.pedro.rtmpstreamer.R;
-import com.pedro.rtsp.utils.ConnectCheckerRtsp;
-
+/**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.Camera2Base}
+ * {@link com.pedro.rtplibrary.rtmp.RtmpCamera2}
+ */
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class SurfaceModeRtspActivity extends AppCompatActivity
-    implements ConnectCheckerRtsp, View.OnClickListener {
+public class SurfaceModeRtmpActivity extends AppCompatActivity
+    implements ConnectCheckerRtmp, View.OnClickListener {
 
-  private RtspCamera2 rtspCamera2;
+  private RtmpCamera2 rtmpCamera2;
   private Button button;
   private EditText etUrl;
 
@@ -32,79 +36,88 @@ public class SurfaceModeRtspActivity extends AppCompatActivity
     button = findViewById(R.id.b_start_stop);
     button.setOnClickListener(this);
     etUrl = findViewById(R.id.et_rtp_url);
-    etUrl.setHint(R.string.hint_rtsp);
-    rtspCamera2 = new RtspCamera2(surfaceView, this);
+    etUrl.setHint(R.string.hint_rtmp);
+    rtmpCamera2 = new RtmpCamera2(surfaceView, this);
   }
 
   @Override
-  public void onConnectionSuccessRtsp() {
+  public void onConnectionSuccessRtmp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(SurfaceModeRtspActivity.this, "Connection success", Toast.LENGTH_SHORT)
+        Toast.makeText(SurfaceModeRtmpActivity.this, "Connection success", Toast.LENGTH_SHORT)
             .show();
       }
     });
   }
 
   @Override
-  public void onConnectionFailedRtsp(final String reason) {
+  public void onConnectionFailedRtmp(final String reason) {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(SurfaceModeRtspActivity.this, "Connection failed. " + reason,
+        Toast.makeText(SurfaceModeRtmpActivity.this, "Connection failed. " + reason,
             Toast.LENGTH_SHORT).show();
-        rtspCamera2.stopStream();
-        rtspCamera2.stopPreview();
+        rtmpCamera2.stopStream();
+        rtmpCamera2.stopPreview();
         button.setText(R.string.start_button);
       }
     });
   }
 
   @Override
-  public void onDisconnectRtsp() {
+  public void onDisconnectRtmp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(SurfaceModeRtspActivity.this, "Disconnected", Toast.LENGTH_SHORT).show();
+        Toast.makeText(SurfaceModeRtmpActivity.this, "Disconnected", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onAuthErrorRtsp() {
+  public void onAuthErrorRtmp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(SurfaceModeRtspActivity.this, "Auth error", Toast.LENGTH_SHORT).show();
+        Toast.makeText(SurfaceModeRtmpActivity.this, "Auth error", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onAuthSuccessRtsp() {
+  public void onAuthSuccessRtmp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(SurfaceModeRtspActivity.this, "Auth success", Toast.LENGTH_SHORT).show();
+        Toast.makeText(SurfaceModeRtmpActivity.this, "Auth success", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
   public void onClick(View view) {
-    if (!rtspCamera2.isStreaming()) {
-      if (rtspCamera2.prepareAudio() && rtspCamera2.prepareVideo()) {
+    if (!rtmpCamera2.isStreaming()) {
+      if (rtmpCamera2.prepareAudio() && rtmpCamera2.prepareVideo()) {
         button.setText(R.string.stop_button);
-        rtspCamera2.startStream(etUrl.getText().toString());
+        rtmpCamera2.startStream(etUrl.getText().toString());
       } else {
         Toast.makeText(this, "Error preparing stream, This device cant do it", Toast.LENGTH_SHORT)
             .show();
       }
     } else {
       button.setText(R.string.start_button);
-      rtspCamera2.stopStream();
-      rtspCamera2.stopPreview();
+      rtmpCamera2.stopStream();
+      rtmpCamera2.stopPreview();
+    }
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+    if (rtmpCamera2.isStreaming()) {
+      rtmpCamera2.stopStream();
+      rtmpCamera2.stopPreview();
     }
   }
 }

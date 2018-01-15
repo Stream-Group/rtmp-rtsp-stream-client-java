@@ -1,4 +1,4 @@
-package com.pedro.rtmpstreamer.displayexample;
+package com.pedro.rtpstreamer.displayexample;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -13,10 +13,15 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.pedro.rtplibrary.rtmp.RtmpDisplay;
-import com.pedro.rtmpstreamer.R;
+import com.pedro.rtpstreamer.R;
 
 import net.ossrs.rtmp.ConnectCheckerRtmp;
 
+/**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.DisplayBase}
+ * {@link com.pedro.rtplibrary.rtmp.RtmpDisplay}
+ */
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class DisplayRtmpActivity extends AppCompatActivity
     implements ConnectCheckerRtmp, View.OnClickListener {

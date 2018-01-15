@@ -1,5 +1,6 @@
-package com.pedro.rtmpstreamer.customexample;
+package com.pedro.rtpstreamer.customexample;
 
+import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,15 +26,22 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import com.pedro.encoder.input.video.CameraOpenException;
 import com.pedro.encoder.input.video.EffectManager;
-import com.pedro.rtmpstreamer.R;
+import com.pedro.rtpstreamer.R;
 import com.pedro.rtplibrary.rtsp.RtspCamera1;
 import com.pedro.rtsp.rtsp.Protocol;
 import com.pedro.rtsp.utils.ConnectCheckerRtsp;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+/**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.Camera1Base}
+ * {@link com.pedro.rtplibrary.rtsp.RtspCamera1}
+ */
 public class RtspActivity extends AppCompatActivity
     implements Button.OnClickListener, ConnectCheckerRtsp, SurfaceHolder.Callback {
 
@@ -137,7 +145,11 @@ public class RtspActivity extends AppCompatActivity
 
     ArrayAdapter<String> resolutionAdapter =
         new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item);
-    resolutionAdapter.addAll(rtspCamera1.getResolutions());
+    List<String> list = new ArrayList<>();
+    for (Camera.Size size : rtspCamera1.getResolutionsBack()) {
+      list.add(size.width + "X" + size.height);
+    }
+    resolutionAdapter.addAll(list);
     spResolution.setAdapter(resolutionAdapter);
     //edittexts
     etVideoBitrate =
@@ -229,16 +241,15 @@ public class RtspActivity extends AppCompatActivity
           } else {
             rtspCamera1.setProtocol(Protocol.UDP);
           }
-          String resolution =
-              rtspCamera1.getResolutions().get(spResolution.getSelectedItemPosition());
+          Camera.Size resolution =
+              rtspCamera1.getResolutionsBack().get(spResolution.getSelectedItemPosition());
           String user = etWowzaUser.getText().toString();
           String password = etWowzaPassword.getText().toString();
           if (!user.isEmpty() && !password.isEmpty()) {
             rtspCamera1.setAuthorization(user, password);
           }
-          int width = Integer.parseInt(resolution.split("X")[0]);
-          int height = Integer.parseInt(resolution.split("X")[1]);
-
+          int width = resolution.width;
+          int height = resolution.height;
           if (rtspCamera1.prepareAudio(Integer.parseInt(etAudioBitrate.getText().toString()) * 1024,
               Integer.parseInt(etSampleRate.getText().toString()),
               rgChannel.getCheckedRadioButtonId() == R.id.rb_stereo, cbEchoCanceler.isChecked(),
@@ -297,7 +308,6 @@ public class RtspActivity extends AppCompatActivity
           rtspCamera1.switchCamera();
         } catch (CameraOpenException e) {
           Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-          rtspCamera1.switchCamera();
         }
         break;
       //options menu
@@ -323,6 +333,7 @@ public class RtspActivity extends AppCompatActivity
     super.onPause();
     if (rtspCamera1.isStreaming()) {
       rtspCamera1.stopStream();
+      rtspCamera1.stopPreview();
       bStartStop.setText(getResources().getString(R.string.start_button));
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && rtspCamera1.isRecording()) {

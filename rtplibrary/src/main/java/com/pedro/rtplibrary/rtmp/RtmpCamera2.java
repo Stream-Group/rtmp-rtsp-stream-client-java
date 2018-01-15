@@ -16,10 +16,10 @@ import net.ossrs.rtmp.SrsFlvMuxer;
 import java.nio.ByteBuffer;
 
 /**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.Camera2Base}
+ *
  * Created by pedro on 6/07/17.
- * This builder is under test, rotation only work with hardware because use encoding surface mode.
- * This maybe don't work for synchronizations problems and you will lose audio or video channel in
- * the stream
  */
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class RtmpCamera2 extends Camera2Base {
@@ -44,6 +44,15 @@ public class RtmpCamera2 extends Camera2Base {
   public RtmpCamera2(Context context, ConnectCheckerRtmp connectChecker) {
     super(context);
     srsFlvMuxer = new SrsFlvMuxer(connectChecker);
+  }
+
+  /**
+   * H264 profile.
+   *
+   * @param profileIop Could be ProfileIop.BASELINE or ProfileIop.CONSTRAINED
+   */
+  public void setProfileIop(byte profileIop) {
+    srsFlvMuxer.setProfileIop(profileIop);
   }
 
   @Override

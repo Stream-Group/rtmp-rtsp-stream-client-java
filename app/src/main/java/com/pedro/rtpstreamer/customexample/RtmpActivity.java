@@ -1,5 +1,6 @@
-package com.pedro.rtmpstreamer.customexample;
+package com.pedro.rtpstreamer.customexample;
 
+import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,14 +26,21 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import com.pedro.encoder.input.video.CameraOpenException;
 import com.pedro.encoder.input.video.EffectManager;
-import com.pedro.rtmpstreamer.R;
+import com.pedro.rtpstreamer.R;
 import com.pedro.rtplibrary.rtmp.RtmpCamera1;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import net.ossrs.rtmp.ConnectCheckerRtmp;
 
+/**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.Camera1Base}
+ * {@link com.pedro.rtplibrary.rtmp.RtmpCamera1}
+ */
 public class RtmpActivity extends AppCompatActivity
     implements Button.OnClickListener, ConnectCheckerRtmp, SurfaceHolder.Callback {
 
@@ -133,7 +141,11 @@ public class RtmpActivity extends AppCompatActivity
 
     ArrayAdapter<String> resolutionAdapter =
         new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item);
-    resolutionAdapter.addAll(rtmpCamera1.getResolutions());
+    List<String> list = new ArrayList<>();
+    for (Camera.Size size : rtmpCamera1.getResolutionsBack()) {
+      list.add(size.width + "X" + size.height);
+    }
+    resolutionAdapter.addAll(list);
     spResolution.setAdapter(resolutionAdapter);
     //edittexts
     etVideoBitrate =
@@ -220,16 +232,15 @@ public class RtmpActivity extends AppCompatActivity
       case R.id.b_start_stop:
         if (!rtmpCamera1.isStreaming()) {
           bStartStop.setText(getResources().getString(R.string.stop_button));
-          String resolution =
-              rtmpCamera1.getResolutions().get(spResolution.getSelectedItemPosition());
+          Camera.Size resolution =
+              rtmpCamera1.getResolutionsBack().get(spResolution.getSelectedItemPosition());
           String user = etWowzaUser.getText().toString();
           String password = etWowzaPassword.getText().toString();
           if (!user.isEmpty() && !password.isEmpty()) {
             rtmpCamera1.setAuthorization(user, password);
           }
-          int width = Integer.parseInt(resolution.split("X")[0]);
-          int height = Integer.parseInt(resolution.split("X")[1]);
-
+          int width = resolution.width;
+          int height = resolution.height;
           if (rtmpCamera1.prepareVideo(width, height, Integer.parseInt(etFps.getText().toString()),
               Integer.parseInt(etVideoBitrate.getText().toString()) * 1024,
               cbHardwareRotation.isChecked(), orientations[spOrientation.getSelectedItemPosition()])
@@ -287,9 +298,8 @@ public class RtmpActivity extends AppCompatActivity
       case R.id.switch_camera:
         try {
           rtmpCamera1.switchCamera();
-        } catch (CameraOpenException e) {
-          Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-          rtmpCamera1.switchCamera();
+        } catch (final CameraOpenException e) {
+          Toast.makeText(RtmpActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
         break;
       default:
@@ -302,6 +312,7 @@ public class RtmpActivity extends AppCompatActivity
     super.onPause();
     if (rtmpCamera1.isStreaming()) {
       rtmpCamera1.stopStream();
+      rtmpCamera1.stopPreview();
       bStartStop.setText(getResources().getString(R.string.start_button));
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && rtmpCamera1.isRecording()) {

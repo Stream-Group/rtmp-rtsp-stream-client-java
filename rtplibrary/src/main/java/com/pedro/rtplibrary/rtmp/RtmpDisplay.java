@@ -13,6 +13,9 @@ import net.ossrs.rtmp.SrsFlvMuxer;
 import java.nio.ByteBuffer;
 
 /**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.DisplayBase}
+ *
  * Created by pedro on 9/08/17.
  */
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -23,6 +26,15 @@ public class RtmpDisplay extends DisplayBase {
   public RtmpDisplay(Context context, ConnectCheckerRtmp connectChecker) {
     super(context);
     srsFlvMuxer = new SrsFlvMuxer(connectChecker);
+  }
+
+  /**
+   * H264 profile.
+   *
+   * @param profileIop Could be ProfileIop.BASELINE or ProfileIop.CONSTRAINED
+   */
+  public void setProfileIop(byte profileIop) {
+    srsFlvMuxer.setProfileIop(profileIop);
   }
 
   @Override

@@ -1,4 +1,4 @@
-package com.pedro.rtmpstreamer.openglexample;
+package com.pedro.rtpstreamer.openglexample;
 
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -16,17 +16,22 @@ import android.widget.Toast;
 import com.pedro.encoder.utils.gl.GifStreamObject;
 import com.pedro.encoder.utils.gl.ImageStreamObject;
 import com.pedro.encoder.utils.gl.TextStreamObject;
-import com.pedro.rtmpstreamer.R;
-import com.pedro.rtplibrary.rtmp.RtmpCamera1;
+import com.pedro.rtpstreamer.R;
+import com.pedro.rtplibrary.rtsp.RtspCamera1;
 import com.pedro.rtplibrary.view.OpenGlView;
+import com.pedro.rtsp.utils.ConnectCheckerRtsp;
 import java.io.IOException;
-import net.ossrs.rtmp.ConnectCheckerRtmp;
 
+/**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.Camera1Base}
+ * {@link com.pedro.rtplibrary.rtmp.RtmpCamera1}
+ */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class OpenGlRtmpActivity extends AppCompatActivity
-    implements ConnectCheckerRtmp, View.OnClickListener {
+public class OpenGlRtspActivity extends AppCompatActivity
+    implements ConnectCheckerRtsp, View.OnClickListener {
 
-  private RtmpCamera1 rtmpCamera1;
+  private RtspCamera1 rtspCamera1;
   private Button button;
   private EditText etUrl;
 
@@ -39,8 +44,8 @@ public class OpenGlRtmpActivity extends AppCompatActivity
     button = findViewById(R.id.b_start_stop);
     button.setOnClickListener(this);
     etUrl = findViewById(R.id.et_rtp_url);
-    etUrl.setHint(R.string.hint_rtmp);
-    rtmpCamera1 = new RtmpCamera1(openGlView, this);
+    etUrl.setHint(R.string.hint_rtsp);
+    rtspCamera1 = new RtspCamera1(openGlView, this);
   }
 
   @Override
@@ -51,7 +56,7 @@ public class OpenGlRtmpActivity extends AppCompatActivity
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    if (rtmpCamera1.isStreaming()) {
+    if (rtspCamera1.isStreaming()) {
       switch (item.getItemId()) {
         case R.id.text:
           setTextToStream();
@@ -63,7 +68,7 @@ public class OpenGlRtmpActivity extends AppCompatActivity
           setGifToStream();
           return true;
         case R.id.clear:
-          rtmpCamera1.clearStreamObject();
+          rtspCamera1.clearStreamObject();
           return true;
         default:
           return false;
@@ -77,7 +82,7 @@ public class OpenGlRtmpActivity extends AppCompatActivity
     try {
       TextStreamObject textStreamObject = new TextStreamObject();
       textStreamObject.load("Hello world", 22, Color.RED);
-      rtmpCamera1.setTextStreamObject(textStreamObject);
+      rtspCamera1.setTextStreamObject(textStreamObject);
     } catch (IOException e) {
       Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
     }
@@ -87,7 +92,7 @@ public class OpenGlRtmpActivity extends AppCompatActivity
     try {
       ImageStreamObject imageStreamObject = new ImageStreamObject();
       imageStreamObject.load(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
-      rtmpCamera1.setImageStreamObject(imageStreamObject);
+      rtspCamera1.setImageStreamObject(imageStreamObject);
     } catch (IOException e) {
       Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
     }
@@ -97,80 +102,89 @@ public class OpenGlRtmpActivity extends AppCompatActivity
     try {
       GifStreamObject gifStreamObject = new GifStreamObject();
       gifStreamObject.load(getResources().openRawResource(R.raw.banana));
-      rtmpCamera1.setGifStreamObject(gifStreamObject);
+      rtspCamera1.setGifStreamObject(gifStreamObject);
     } catch (IOException e) {
       Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
     }
   }
 
   @Override
-  public void onConnectionSuccessRtmp() {
+  public void onConnectionSuccessRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(OpenGlRtmpActivity.this, "Connection success", Toast.LENGTH_SHORT).show();
+        Toast.makeText(OpenGlRtspActivity.this, "Connection success", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onConnectionFailedRtmp(final String reason) {
+  public void onConnectionFailedRtsp(final String reason) {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(OpenGlRtmpActivity.this, "Connection failed. " + reason, Toast.LENGTH_SHORT)
+        Toast.makeText(OpenGlRtspActivity.this, "Connection failed. " + reason, Toast.LENGTH_SHORT)
             .show();
-        rtmpCamera1.stopStream();
-        rtmpCamera1.stopPreview();
+        rtspCamera1.stopStream();
+        rtspCamera1.stopPreview();
         button.setText(R.string.start_button);
       }
     });
   }
 
   @Override
-  public void onDisconnectRtmp() {
+  public void onDisconnectRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(OpenGlRtmpActivity.this, "Disconnected", Toast.LENGTH_SHORT).show();
+        Toast.makeText(OpenGlRtspActivity.this, "Disconnected", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onAuthErrorRtmp() {
+  public void onAuthErrorRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(OpenGlRtmpActivity.this, "Auth error", Toast.LENGTH_SHORT).show();
+        Toast.makeText(OpenGlRtspActivity.this, "Auth error", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
-  public void onAuthSuccessRtmp() {
+  public void onAuthSuccessRtsp() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Toast.makeText(OpenGlRtmpActivity.this, "Auth success", Toast.LENGTH_SHORT).show();
+        Toast.makeText(OpenGlRtspActivity.this, "Auth success", Toast.LENGTH_SHORT).show();
       }
     });
   }
 
   @Override
   public void onClick(View view) {
-    if (!rtmpCamera1.isStreaming()) {
-      if (rtmpCamera1.prepareAudio() && rtmpCamera1.prepareVideo()) {
+    if (!rtspCamera1.isStreaming()) {
+      if (rtspCamera1.prepareAudio() && rtspCamera1.prepareVideo()) {
         button.setText(R.string.stop_button);
-        rtmpCamera1.startStream(etUrl.getText().toString());
+        rtspCamera1.startStream(etUrl.getText().toString());
       } else {
         Toast.makeText(this, "Error preparing stream, This device cant do it", Toast.LENGTH_SHORT)
             .show();
       }
     } else {
       button.setText(R.string.start_button);
-      rtmpCamera1.stopStream();
-      rtmpCamera1.stopPreview();
+      rtspCamera1.stopStream();
+      rtspCamera1.stopPreview();
+    }
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+    if (rtspCamera1.isStreaming()) {
+      rtspCamera1.stopStream();
+      rtspCamera1.stopPreview();
     }
   }
 }

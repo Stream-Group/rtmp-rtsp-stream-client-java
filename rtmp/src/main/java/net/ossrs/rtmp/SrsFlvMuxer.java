@@ -4,7 +4,6 @@ import android.media.MediaCodec;
 import android.os.Process;
 import android.util.Log;
 import com.github.faucamp.simplertmp.DefaultRtmpPublisher;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
@@ -58,10 +57,11 @@ public class SrsFlvMuxer {
   private SrsFlvFrame mAudioSequenceHeader;
   private SrsAllocator mVideoAllocator = new SrsAllocator(VIDEO_ALLOC_SIZE);
   private SrsAllocator mAudioAllocator = new SrsAllocator(AUDIO_ALLOC_SIZE);
-  private BlockingQueue<SrsFlvFrame> mFlvTagCache = new LinkedBlockingQueue<>(60);
+  private BlockingQueue<SrsFlvFrame> mFlvTagCache = new LinkedBlockingQueue<>(30);
   private ConnectCheckerRtmp connectCheckerRtmp;
   private int sampleRate = 44100;
   private boolean isPpsSpsSend = false;
+  private byte profileIop = ProfileIop.BASELINE;
 
   /**
    * constructor.
@@ -69,6 +69,11 @@ public class SrsFlvMuxer {
   public SrsFlvMuxer(ConnectCheckerRtmp connectCheckerRtmp) {
     this.connectCheckerRtmp = connectCheckerRtmp;
     publisher = new DefaultRtmpPublisher(connectCheckerRtmp);
+  }
+
+  public void setProfileIop(byte profileIop)
+  {
+    this.profileIop = profileIop;
   }
 
   public void setSpsPPs(ByteBuffer sps, ByteBuffer pps) {
@@ -453,7 +458,7 @@ public class SrsFlvMuxer {
       // AVCProfileIndication
       seq_hdr.data.put(profile_idc);
       // profile_compatibility
-      seq_hdr.data.put((byte) 0x00);
+      seq_hdr.data.put(profileIop);
       // AVCLevelIndication
       seq_hdr.data.put(level_idc);
       // lengthSizeMinusOne, or NAL_unit_length, always use 4bytes size,

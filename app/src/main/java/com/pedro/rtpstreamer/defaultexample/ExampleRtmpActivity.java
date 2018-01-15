@@ -1,4 +1,4 @@
-package com.pedro.rtmpstreamer.defaultexample;
+package com.pedro.rtpstreamer.defaultexample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -8,10 +8,15 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import com.pedro.rtmpstreamer.R;
+import com.pedro.rtpstreamer.R;
 import com.pedro.rtplibrary.rtmp.RtmpCamera1;
 import net.ossrs.rtmp.ConnectCheckerRtmp;
 
+/**
+ * More documentation see:
+ * {@link com.pedro.rtplibrary.base.Camera1Base}
+ * {@link com.pedro.rtplibrary.rtmp.RtmpCamera1}
+ */
 public class ExampleRtmpActivity extends AppCompatActivity
     implements ConnectCheckerRtmp, View.OnClickListener {
 
@@ -98,6 +103,15 @@ public class ExampleRtmpActivity extends AppCompatActivity
       }
     } else {
       button.setText(R.string.start_button);
+      rtmpCamera1.stopStream();
+      rtmpCamera1.stopPreview();
+    }
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+    if (rtmpCamera1.isStreaming()) {
       rtmpCamera1.stopStream();
       rtmpCamera1.stopPreview();
     }

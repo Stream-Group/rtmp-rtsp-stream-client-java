@@ -9,16 +9,17 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
+import android.util.Size;
 import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.TextureView;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,7 +48,6 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
   private CameraDevice cameraDevice;
   private SurfaceView surfaceView;
   private TextureView textureView;
-  private Surface surfacePreview; //input surfacePreview from TextureManager
   private Surface surfaceEncoder; //input surfaceEncoder from videoEncoder
   private CameraManager cameraManager;
   private Handler cameraHandler;
@@ -72,12 +72,14 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
     prepared = true;
   }
 
-  public void prepareCamera(Surface surface, boolean opengl) {
-    if (opengl) {
-      this.surfacePreview = surface;
-    } else {
-      this.surfaceEncoder = surface;
-    }
+  public void prepareCamera(Surface surface) {
+    this.surfaceEncoder = surface;
+    prepared = true;
+  }
+
+  public void prepareCamera(SurfaceTexture surfaceTexture, int width, int height) {
+    surfaceTexture.setDefaultBufferSize(width, height);
+    this.surfaceEncoder = new Surface(surfaceTexture);
     prepared = true;
   }
 
@@ -104,9 +106,6 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
               cameraCaptureSession.setRepeatingBurst(
                   Arrays.asList(drawPreview(preview), drawInputSurface(surfaceEncoder)), null,
                   cameraHandler);
-            } else if (surfacePreview != null) {
-              cameraCaptureSession.setRepeatingBurst(
-                  Collections.singletonList(drawPreview(preview)), null, cameraHandler);
             } else {
               cameraCaptureSession.setRepeatingBurst(
                   Collections.singletonList(drawInputSurface(surfaceEncoder)), null, cameraHandler);
@@ -135,8 +134,6 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
     } else if (textureView != null) {
       final SurfaceTexture texture = textureView.getSurfaceTexture();
       surface = new Surface(texture);
-    } else if (surfacePreview != null) {
-      surface = this.surfacePreview;
     }
     return surface;
   }
@@ -157,7 +154,7 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
   private CaptureRequest drawInputSurface(Surface surface) {
     try {
       CaptureRequest.Builder builder =
-          cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+          cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
       builder.addTarget(surface);
       return builder.build();
     } catch (CameraAccessException e) {
@@ -183,6 +180,38 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
       openCameraBack();
     } else {
       openCameraId(cameraId);
+    }
+  }
+
+  public Size[] getCameraResolutionsBack() {
+    try {
+      CameraCharacteristics cameraCharacteristics = cameraManager.getCameraCharacteristics("0");
+      if (cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
+          != CameraCharacteristics.LENS_FACING_BACK) {
+        cameraCharacteristics = cameraManager.getCameraCharacteristics("1");
+      }
+      StreamConfigurationMap streamConfigurationMap =
+          cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+      return streamConfigurationMap.getOutputSizes(SurfaceTexture.class);
+    } catch (CameraAccessException e) {
+      Log.e(TAG, e.getMessage());
+      return new Size[0];
+    }
+  }
+
+  public Size[] getCameraResolutionsFront() {
+    try {
+      CameraCharacteristics cameraCharacteristics = cameraManager.getCameraCharacteristics("0");
+      if (cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
+          != CameraCharacteristics.LENS_FACING_FRONT) {
+        cameraCharacteristics = cameraManager.getCameraCharacteristics("1");
+      }
+      StreamConfigurationMap streamConfigurationMap =
+          cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+      return streamConfigurationMap.getOutputSizes(SurfaceTexture.class);
+    } catch (CameraAccessException e) {
+      Log.e(TAG, e.getMessage());
+      return new Size[0];
     }
   }
 
@@ -238,9 +267,6 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
         if (surfaceView != null || textureView != null) {
           cameraCaptureSession.setRepeatingBurst(Collections.singletonList(drawPreview(preview)),
               null, cameraHandler);
-        } else if (surfacePreview != null) {
-          cameraCaptureSession.setRepeatingBurst(Collections.singletonList(drawPreview(preview)),
-              null, cameraHandler);
         }
       } catch (CameraAccessException e) {
         e.printStackTrace();
@@ -264,6 +290,7 @@ public class Camera2ApiManager extends CameraDevice.StateCallback {
 
   @Override
   public void onOpened(@NonNull CameraDevice cameraDevice) {
+
     this.cameraDevice = cameraDevice;
     startPreview(cameraDevice);
     Log.i(TAG, "camera opened");
